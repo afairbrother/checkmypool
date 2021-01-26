@@ -1,6 +1,7 @@
 require('dotenv').config();
 const puppeteer = require('puppeteer');
 const format = require('date-fns/format');
+const isFuture = require('date-fns/isFuture');
 const schedule = require('node-schedule');
 const constants = require('./constants');
 
@@ -9,6 +10,7 @@ const authToken = process.env.ACCESS_TOKEN;
 const client = require('twilio')(accountSid, authToken);
 
 let availableDates = [];
+let textableDates = [];
 
 function formatDateArray(dates) {
     const formattedDates = dates.map((date) => {
@@ -43,7 +45,7 @@ async function getReservationDates() {
 
 function buildFormattedMessage() {
     let bodyMessage = 'There are new pool times open on ';
-    formatDateArray(availableDates).forEach((date) => {
+    formatDateArray(textableDates).forEach((date) => {
         bodyMessage += date + ' ';
     });
     bodyMessage += `${constants.poolList[0].url}`;
@@ -51,19 +53,36 @@ function buildFormattedMessage() {
     return bodyMessage;
 }
 
+function shouldSendMessage() {
+    let sendMessage = false;
+    
+    textableDates = availableDates.filter((date) => isFuture(new Date(date.replace(/-/g, '\/').replace(/T.+/, ''))));
+    console.log('textable dates: ', textableDates);
+
+    if(textableDates.length > 0) {
+        sendMessage = true;
+    }
+
+    return sendMessage;
+}
+
 (async() => {
     console.log('initializing and reporting on :02');
     schedule.scheduleJob('02 * * * *', async function(){
         await getReservationDates();
         if(availableDates.length > 0) {
+            const sendMessage = shouldSendMessage();
             const bodyString = buildFormattedMessage();
-            client.messages
+
+            if(sendMessage) {
+                client.messages
                 .create({
                     body: bodyString,
                     from: process.env.TWILIO_NUMBER,
                     to: process.env.USER_NUMBER
                 })
                 .then(message => console.log(message.sid));
+            }
         }
     });
 })();
