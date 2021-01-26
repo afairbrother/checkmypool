@@ -35,7 +35,7 @@ async function getReservationDates() {
     console.log('getting bookable dates...');
     await page.waitForTimeout(3000);
     availableDates = await page.evaluate(() => 
-    Array.from(document.querySelectorAll('[title*="Times available"]')).map(date => date.getAttribute('data-value'))
+        Array.from(document.querySelectorAll('[title*="Times available"]')).map(date => date.getAttribute('data-value'))
     );
     
     console.log('there are available times on these dates: ', formatDateArray(availableDates));
