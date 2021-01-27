@@ -67,8 +67,10 @@ function shouldSendMessage() {
 }
 
 (async() => {
-    console.log('initializing and reporting on :02');
-    schedule.scheduleJob('02 * * * *', async function(){
+    console.log('initializing and reporting every 30 minutes');
+    console.log(`start time: ${format(Date.now(), "E, LLL dd | kk:mm")}`);
+    schedule.scheduleJob('*/30 * * * *', async function(){
+        console.log(`time: ${format(Date.now(), "E, LLL dd | kk:mm")}`);
         await getReservationDates();
         if(availableDates.length > 0) {
             const sendMessage = shouldSendMessage();
