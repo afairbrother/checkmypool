@@ -33,6 +33,15 @@ async function getReservationDates() {
     await page.click('input[aria-label*="Single" i],input[aria-label*="Solo" i]');
     
     console.log('getting bookable dates...');
+
+    const needsToClickNextMonth = await page.evaluate(() => {
+        return !!document.querySelector('.navigator[data-disabled="false"');
+    });
+
+    if(needsToClickNextMonth) {
+        await page.click('.navigator[data-disabled="false"');
+    }
+
     await page.waitForTimeout(3000);
     availableDates = await page.evaluate(() => 
         Array.from(document.querySelectorAll('[title*="Times available"]')).map(date => date.getAttribute('data-value'))
